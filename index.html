@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:," />
+<title>MAP™ Secure Connect</title>
+<style>
+  :root{
+    --accent: hsl(290, 83%, 63%);
+    --accent-ink: #1c0a20;
+    --accent-soft: hsla(290, 83%, 63%, .14);
+    --bg: #0a0a0e;
+    --panel: #121218;
+    --panel-2: hsl(0, 0%, 9%);
+    --line: #26262f;
+    --text: #f4f2f7;
+    --muted: #a7a3b3;
+    color-scheme: dark;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(900px 480px at 85% -10%, hsla(290,83%,63%,.16), transparent 60%),
+      radial-gradient(700px 420px at -10% 30%, hsla(290,83%,63%,.07), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family: ui-sans-system, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    padding:24px 18px;
+  }
+  button{ font:inherit; cursor:pointer; min-height:44px; }
+
+  .mark{ width:34px; height:34px; border-radius:9px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font-weight:900; font-size:17px; }
+
+  /* THE platform ConnectButton — primaryButtonBg / accentButtonBg = hsl(290,83%,63%) */
+  .tw-connect{
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--accent); color:var(--accent-ink);
+    border:0; border-radius:12px; padding:0 26px; min-height:52px;
+    font-size:16.5px; font-weight:800; letter-spacing:.01em;
+    box-shadow:0 8px 28px hsla(290,83%,63%,.35);
+    transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  .tw-connect:hover{ background:hsl(290, 83%, 68%); }
+  .tw-connect:active{ transform:scale(.98); }
+  .tw-connect .chev{ font-size:12px; opacity:.75; }
+  .tw-connect.connected{ background:var(--panel-2); color:var(--text); border:1px solid var(--line); box-shadow:none; font-weight:700; }
+  .avatar{ width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg, var(--accent), hsl(320,80%,55%)); flex:none; }
+
+  .wicon{ width:30px; height:30px; border-radius:8px; display:grid; place-items:center; font-weight:900; font-size:13px; color:#fff; flex:none; }
+
+  /* modal */
+  .scrim{ position:fixed; inset:0; background:rgba(4,4,8,.72); backdrop-filter:blur(3px); display:none; align-items:flex-end; justify-content:center; z-index:50; }
+  .scrim.open{ display:flex; }
+  @media (min-width:640px){ .scrim{ align-items:center; padding:20px; } }
+  .modal{ width:100%; max-width:400px; max-height:88vh; overflow-y:auto; background:#131318; border:1px solid var(--line); border-radius:18px 18px 0 0; padding:20px; animation:up .18s ease; }
+  @media (min-width:640px){ .modal{ border-radius:18px; } }
+  @keyframes up{ from{ transform:translateY(14px); opacity:.4; } to{ transform:none; opacity:1; } }
+  @media (prefers-reduced-motion: reduce){ .modal{ animation:none; } .tw-connect{ transition:none; } }
+  .modal-head{ display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .modal-head .mark{ width:30px; height:30px; font-size:15px; border-radius:8px; }
+  .modal-head h3{ margin:0; font-size:17px; flex:1; }
+  .x{ background:var(--panel-2); border:1px solid var(--line); color:var(--muted); width:36px; height:36px; min-height:36px; border-radius:9px; font-size:15px; line-height:1; }
+  .modal .msub{ color:var(--muted); font-size:13px; margin:0 0 16px; }
+  .sect{ font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin:16px 0 8px; }
+  .authgrid{ display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; }
+  .authbtn{ background:var(--panel-2); border:1px solid var(--line); border-radius:11px; color:var(--text); display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 2px 8px; min-height:58px; font-size:10.5px; font-weight:600; }
+  .authbtn:hover{ background:hsl(0,0%,13%); border-color:hsla(290,83%,63%,.5); }
+  .authbtn .glyph{ width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:900; color:#fff; }
+  .wbtn{ width:100%; display:flex; align-items:center; gap:12px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; color:var(--text); padding:10px 14px; margin-bottom:8px; font-weight:700; font-size:15px; text-align:left; }
+  .wbtn:hover{ background:hsl(0,0%,13%); border-color:hsla(290,83%,63%,.5); }
+  .wbtn small{ margin-left:auto; color:var(--muted); font-weight:500; font-size:12px; }
+  .wbtn.danger{ color:#fda4af; justify-content:center; }
+  .acct{ display:none; align-items:center; gap:10px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:10px 14px; margin-bottom:8px; font-family:ui-monospace, Menlo, monospace; font-size:13px; word-break:break-all; }
+  .acct.show{ display:flex; }
+  .modal-msg{ display:none; border-radius:10px; padding:11px 13px; font-size:13.5px; margin-top:12px; }
+  .modal-msg.show{ display:block; }
+  .modal-msg.err{ background:rgba(244,63,94,.12); border:1px solid rgba(244,63,94,.4); color:#fda4af; }
+  .modal-msg.info{ background:var(--accent-soft); border:1px solid hsla(290,83%,63%,.4); color:var(--text); }
+  .powered{ text-align:center; color:var(--muted); font-size:11.5px; margin-top:16px; }
+  .powered b{ color:var(--accent); }
+</style>
+</head>
+<body>
+
+  <button class="tw-connect" id="connectBtn" type="button">
+    <span id="connectLabel">Connect</span><span class="chev" id="connectChev">▾</span>
+  </button>
+
+<!-- ============ SECURE CONNECT MODAL (compact) ============ -->
+<div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-label="Secure Connect">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="mark">M</div>
+      <h3>Secure Connect</h3>
+      <button class="x" id="closeModal" type="button" aria-label="Close">✕</button>
+    </div>
+    <p class="msub">Sign in with a social account, or connect an external wallet.</p>
+
+    <div class="acct" id="acctRow"></div>
+    <button class="wbtn danger" id="disconnectBtn" type="button" style="display:none">Disconnect</button>
+
+    <div class="sect" style="margin-top:2px">In-app wallet</div>
+    <div class="authgrid" id="authGrid"></div>
+
+    <div class="sect">External wallets</div>
+    <div id="walletList">
+      <button class="wbtn" data-wallet="MetaMask" type="button"><span class="wicon" style="background:#f6851b">M</span>MetaMask<small>io.metamask</small></button>
+      <button class="wbtn" data-wallet="Coinbase Wallet" type="button"><span class="wicon" style="background:#0052ff">C</span>Coinbase Wallet<small>com.coinbase.wallet</small></button>
+      <button class="wbtn" data-wallet="Trust Wallet" type="button"><span class="wicon" style="background:#0500ff">T</span>Trust Wallet<small>com.trustwallet.app</small></button>
+    </div>
+
+    <div class="modal-msg" id="modalMsg"></div>
+    <div class="powered">Powered by <b>thirdweb</b> · Account abstraction on Ethereum · Gas sponsored</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var account = null;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var connectBtn = $("connectBtn"), label = $("connectLabel"), chev = $("connectChev"),
+      scrim = $("scrim"), msg = $("modalMsg"),
+      acctRow = $("acctRow"), disconnectBtn = $("disconnectBtn");
+
+  /* build in-app auth grid */
+  var AUTH = [
+    ["google","G","#4285f4"],["discord","D","#5865f2"],["telegram","T","#229ed9"],
+    ["farcaster","F","#855dcd"],["email","@","#6b7280"],["x","X","#111111"],
+    ["passkey","P","#0ea5e9"],["phone","☎","#22c55e"],["apple","A","#333333"],
+    ["coinbase","C","#0052ff"]
+  ];
+  var grid = $("authGrid");
+  AUTH.forEach(function(a){
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "authbtn";
+    b.innerHTML = '<span class="glyph" style="background:' + a[2] + '">' + a[1] + '</span>' + a[0];
+    b.addEventListener("click", function(){
+      showMsg("info", "“" + a[0] + "” sign-in isn't available on this page — connect an external wallet below.");
+    });
+    grid.appendChild(b);
+  });
+
+  function short(addr){ return addr ? addr.slice(0,6) + "…" + addr.slice(-4) : ""; }
+
+  function render(){
+    if(account){
+      connectBtn.classList.add("connected");
+      label.innerHTML = "";
+      var av = document.createElement("span"); av.className = "avatar";
+      label.appendChild(av);
+      label.appendChild(document.createTextNode(" " + short(account)));
+      chev.textContent = "▾";
+      acctRow.textContent = account;
+      acctRow.classList.add("show");
+      disconnectBtn.style.display = "";
+    } else {
+      connectBtn.classList.remove("connected");
+      label.textContent = "Connect";
+      acctRow.classList.remove("show");
+      disconnectBtn.style.display = "none";
+    }
+  }
+
+  function showMsg(kind, text){
+    msg.className = "modal-msg show " + kind;
+    msg.textContent = text;
+  }
+  function openModal(){ msg.className = "modal-msg"; scrim.classList.add("open"); }
+  function closeModal(){ scrim.classList.remove("open"); }
+
+  connectBtn.addEventListener("click", openModal);
+  $("closeModal").addEventListener("click", closeModal);
+  scrim.addEventListener("click", function(e){ if(e.target === scrim) closeModal(); });
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeModal(); });
+
+  /* EIP-6963 multi-wallet discovery: each wallet button connects to its own
+     provider, not whichever wallet happens to own window.ethereum. */
+  var RDNS = { "MetaMask": "io.metamask", "Coinbase Wallet": "com.coinbase.wallet", "Trust Wallet": "com.trustwallet.app" };
+  var discovered = {};
+  window.addEventListener("eip6963:announceProvider", function(e){
+    if(e.detail && e.detail.info && e.detail.provider){ discovered[e.detail.info.rdns] = e.detail.provider; }
+  });
+  function requestProviders(){ try { window.dispatchEvent(new Event("eip6963:requestProvider")); } catch(err){} }
+  requestProviders();
+
+  var activeProvider = null;
+  function detectProvider(name){
+    var rdns = RDNS[name];
+    if(rdns && discovered[rdns]) return discovered[rdns];
+    var eth = window.ethereum, list = [];
+    if(eth && eth.providers && eth.providers.length) list = eth.providers;
+    else if(eth) list = [eth];
+    for(var i = 0; i < list.length; i++){
+      var p = list[i];
+      if(name === "MetaMask" && p.isMetaMask && !p.isTrust && !p.isTrustWallet && !p.isCoinbaseWallet) return p;
+      if(name === "Coinbase Wallet" && p.isCoinbaseWallet) return p;
+      if(name === "Trust Wallet" && (p.isTrust || p.isTrustWallet)) return p;
+    }
+    if(name === "Trust Wallet" && window.trustwallet) return window.trustwallet.ethereum || window.trustwallet;
+    if(name === "Coinbase Wallet" && window.coinbaseWalletExtension) return window.coinbaseWalletExtension;
+    return null;
+  }
+  function watchProvider(provider){
+    if(!provider || !provider.on || provider.__mapWatched) return;
+    provider.__mapWatched = true;
+    provider.on("accountsChanged", function(accs){ account = accs && accs.length ? accs[0] : null; render(); });
+  }
+
+  function connectExternal(name){
+    requestProviders();
+    var provider = detectProvider(name);
+    if(!provider){
+      showMsg("err", name + " isn't detected in this browser. To connect here, open this page inside the " + name + " app's browser, or install the " + name + " extension, then try again.");
+      return;
+    }
+    showMsg("info", "Requesting connection from " + name + "… approve it in your wallet.");
+    provider.request({ method: "eth_requestAccounts" }).then(function(accs){
+      if(accs && accs.length){
+        account = accs[0]; activeProvider = provider;
+        watchProvider(provider);
+      }
+    }).then(function(){
+      render(); closeModal();
+    }).catch(function(err){
+      showMsg("err", "Connection didn't complete: " + (err && err.message ? err.message : "request rejected in wallet."));
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-wallet]"), function(b){
+    b.addEventListener("click", function(){ connectExternal(b.getAttribute("data-wallet")); });
+  });
+
+  disconnectBtn.addEventListener("click", function(){
+    account = null; activeProvider = null; render(); closeModal();
+  });
+
+  if(window.ethereum){
+    window.ethereum.on && window.ethereum.on("accountsChanged", function(accs){
+      account = accs && accs.length ? accs[0] : null; render();
+    });
+    window.ethereum.request({ method: "eth_accounts" }).then(function(accs){
+      if(accs && accs.length){
+        account = accs[0]; activeProvider = window.ethereum;
+        watchProvider(window.ethereum);
+        render();
+      }
+    }).catch(function(){});
+  }
+  render();
+})();
+</script>
+</body>
+</html>
